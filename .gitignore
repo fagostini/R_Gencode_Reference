@@ -2,3 +2,4 @@
 *.gz
 *.RData
 *.sizes
+*.rds

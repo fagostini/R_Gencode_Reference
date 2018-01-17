@@ -2,6 +2,11 @@ Gencode Annotation Processing
 ================
 Federico Agostini
 
+## To-Do
+
+  - Merge the rRNA (and Mt\_RNA) genes from the main annotation with the
+    predicted tRNA genes
+
 ## Setup
 
     ## R version 3.4.3 (2017-11-30)
@@ -10,7 +15,7 @@ Federico Agostini
 
     ## Running under OS X El Capitan 10.11.6
 
-    ## Last knitted on Wed Jan 17 17:38:24 2018
+    ## Last knitted on Wed Jan 17 18:38:44 2018
 
     ## Working directory set to /Users/agostif/Desktop/GencodeReference
 
@@ -45,6 +50,8 @@ download the following files:
 annotation versions specified within the script. Therefore, if you plan
 to use a different species/assembly/annotation make sure you change the
 script accordingly.
+
+##### Table 1: Gene biotypes (top 20) per annotation level
 
 | Biotype                              |    1 |     2 |    3 |
 | :----------------------------------- | ---: | ----: | ---: |
@@ -81,30 +88,38 @@ annotation) genes.
 
 ### Output
 
-  - **&lt;genome&gt;\_Gencode&lt;version&gt;\_annotations.RData**: It contains
+  - **\<genome\>\_Gencode\<version\>\_annotations.RData**: It contains
     most of the annotation objects, including genes, transcripts and
     exons GRanges, genes and transcripts metadata, and longest pre- and
     mature RNA
     GRanges.
-  - **&lt;genome\>\_Gencode&lt;version&gt;\_annotations.pc.transcript.regions.RData**:
+  - **\<genome\>\_Gencode\<version\>\_annotations.pc.transcript.regions.rds**:
     It contains protein-coding genes GRanges sub-divided into 5’-UTR,
     exonic and 3’-UTR
     regions.
-  - **&lt;genome&gt;\_Gencode&lt;version&gt;\_annotations.all.genes.transcript.regions.RData**:
+  - **\<genome\>\_Gencode\<version\>\_annotations.all.genes.transcript.regions.rds**:
     It contains all the annotated features, where each annotated
     nucleotide is assigned to a transcript biotype using the following
-    hierarchy: ncRNA &gt; cds &gt; utr3 &gt; utr5 &gt; intron &gt; other &gt;
-    intergenic.
+    hierarchy: ncRNA \> cds \> utr3 \> utr5 \> intron \> other \>
+    intergenic
+
+##### Figure 1: Gene length distribution
 
 ![](img/gene_length.png)
 
+##### Figure 2: Trascript length distribution (Longest transcript per gene)
+
 ![](img/txs_length.png)
+
+##### Table 2: Summary of the non-overlapping protein-coding regions
 
 | Region | Min. | 1st Qu. | Median |   Mean | 3rd Qu. |   Max. | Coverage |
 | :----- | ---: | ------: | -----: | -----: | ------: | -----: | -------: |
 | UTR5   |    1 |      97 |    206 |  296.0 |     374 |   7720 |  5598828 |
 | CDS    |    8 |     738 |   1233 | 1670.9 |    2013 | 107976 | 33463040 |
 | UTR3   |    1 |     389 |   1031 | 1725.1 |    2338 |  32870 | 32878861 |
+
+##### Table 3: Summary of all non-overlapping genomic regions
 
 | Region | Min. | 1st Qu. | Median |   Mean | 3rd Qu. |   Max. |   Coverage |
 | :----- | ---: | ------: | -----: | -----: | ------: | -----: | ---------: |
