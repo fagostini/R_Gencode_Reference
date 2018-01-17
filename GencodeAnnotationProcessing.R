@@ -28,6 +28,8 @@ require("biomaRt")
 require("GenomicFeatures")
 require("rtracklayer")
 require("data.table")
+require("knitr")
+require("ggplot2")
 
 ## ----downloadGencode, results="hide", message=FALSE, warning=FALSE-------
 if( species %in% "Homo sapiens" ){
@@ -99,6 +101,16 @@ lnc.gff = lnc.gff[!(seqnames(lnc.gff)%in%"chrY" & lnc.gff$gene_id%in%y.genes)]
 # if(interactive()) {
 #    saveDb(TxDb, file=paste0(genome, "_Gencode", version, ".sqlite"))
 # }
+
+## ------------------------------------------------------------------------
+tab = data.table(as.data.frame(gff))[type%in%"gene", .N, by=c("gene_type", "level")]
+
+tab = dcast.data.table(tab, gene_type~level, value.var="N", fill=0)[order(-(`1`+`2`+`3`))]
+
+setnames(tab, "gene_type", "Biotype")
+
+kable(head(data.frame(tab), 20), col.names=colnames(tab), format='markdown', digits=1,
+      caption="Table 1: Gene biotypes (top 20) per annotation level.")
 
 ## ----extractMetadata-----------------------------------------------------
 # Genes, transcripts and exons
@@ -212,7 +224,36 @@ save(genes, txs,
      exons.pc.granges, exons.nc.granges,
      txs.longest.pc.pre.granges, txs.longest.nc.pre.granges, 
      txs.longest.pc.rna.granges, txs.longest.nc.rna.granges, 
-     file=paste0(genome, "_Gencode", version, "annotations.RData"))
+     file=paste0(genome, "_Gencode", version, "_annotations.RData"))
+
+## ------------------------------------------------------------------------
+tab = gene.metadata
+
+bio_order = tab[, list(median=median(width)), by="gene_type"][order(-median), gene_type]
+
+tab[, gene_type := factor(gene_type, bio_order)]
+
+gg = ggplot(tab, aes(x=gene_type, y=width)) +
+    ggtitle("Gene length distribution") +
+    geom_boxplot() +
+    scale_y_log10("Gene width") +
+    scale_x_discrete("") +
+    theme_bw() + theme(axis.text.x=element_text(angle = 45, hjust = 1))
+ggsave(gg, filename="img/gene_length.png", width=12, height=6)
+
+tab = txs.metadata
+
+bio_order = tab[, list(median=median(width)), by="gene_type"][order(-median), gene_type]
+
+tab[, gene_type := factor(gene_type, bio_order)]
+
+gg = ggplot(tab, aes(x=gene_type, y=width)) +
+    ggtitle("Trascript length distribution (Longest transcript per gene)") +
+    geom_boxplot() +
+    scale_y_log10("Transcript width") +
+    scale_x_discrete("") +
+    theme_bw() + theme(axis.text.x=element_text(angle = 45, hjust = 1))
+ggsave(gg, filename="img/txs_length.png", width=12, height=6)
 
 ## ----codingGeneRegions---------------------------------------------------
 cds = cdsBy(TxDb, by=c("tx"), use.names=TRUE)
@@ -244,7 +285,17 @@ txs.longest.pc.regions = sort.GenomicRanges(txs.longest.pc.regions, ignore.stran
 
 txs.longest.pc.regions = split(txs.longest.pc.regions, txs.longest.pc.regions$tx.id)
 
-save(txs.longest.pc.regions, file=paste0(genome, "_Gencode", version, "annotations.pc.transcript.regions.RData"))
+save(txs.longest.pc.regions, file=paste0(genome, "_Gencode", version, "_annotations.pc.transcript.regions.RData"))
+
+## ------------------------------------------------------------------------
+tab = data.table(as.data.frame(unlist(txs.longest.pc.regions), row.names=NULL))
+
+setnames(tab, "region", "Region")
+
+tab = tab[, sum(width), by=c("tx.id", "Region")][, c(as.list(summary(V1)), Coverage=sum(V1)), by="Region"]
+
+kable(data.frame(tab), col.names=colnames(tab), format='markdown', digits=1,
+      caption="Table 2: Summary of the non-overlapping protein-coding regions.")
 
 ## ----genomicRegions------------------------------------------------------
 # get transcript regions (all genes)
@@ -315,5 +366,15 @@ mcols(tx.regions)$region = factor(mcols(tx.regions)$region, levels=c("ncRNA", "C
 # # sanity check
 # length(tx.regions) == length(reduce(tx.regions, min.gapwidth = 0L))
 
-save(tx.regions, file=paste0(genome, "_Gencode", version, "annotations.all.genes.transcript.regions.RData"))
+save(tx.regions, file=paste0(genome, "_Gencode", version, "_annotations.all.genes.transcript.regions.RData"))
+
+## ------------------------------------------------------------------------
+tab = data.table(as.data.frame(unlist(tx.regions), row.names=NULL))
+
+setnames(tab, "region", "Region")
+
+tab = tab[, c(as.list(summary(width)), Coverage=sum(width)), by="Region"]
+
+kable(data.frame(tab), col.names=colnames(tab), format='markdown', digits=1,
+      caption="Table 3: Summary of all non-overlapping genomic regions.")
 
