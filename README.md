@@ -1,7 +1,6 @@
 Gencode Annotation Processing
 ================
 Federico Agostini
-January 9, 2018
 
 ## Setup
 
