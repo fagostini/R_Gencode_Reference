@@ -18,8 +18,6 @@ knitr::opts_chunk$set(echo = FALSE)
 
 setwd(working.folder)
 
-chromosomes = paste0("chr", c(1:22, "X", "Y", "M"))
-
 species = "Homo sapiens" # or 'Mus musculus' for mouse
 genome = "hg38" # or mm10 for mouse
 version = 27 # or M16 for mouse
@@ -105,6 +103,7 @@ if( species %in% "Homo sapiens" ){
 __Note__: the pipeline will search for the genome assembly and Gencode annotation versions specified within the script. Therefore, if you plan to use a different species/assembly/annotation make sure you change the script accordingly. 
 
 ```{r readAnnotation, message=FALSE, warning=FALSE}
+chromosomes = genomeStyles()[[species]]$UCSC
 chrominfo = sortSeqlevels(with(fread(paste0(genome, ".chrom.sizes"))[V1%in%chromosomes,],
                                Seqinfo(V1, seqlengths = V2, genome = genome)))
 
@@ -347,7 +346,7 @@ txs.longest.pc.regions = sort.GenomicRanges(txs.longest.pc.regions, ignore.stran
 
 txs.longest.pc.regions = split(txs.longest.pc.regions, txs.longest.pc.regions$tx.id)
 
-save(txs.longest.pc.regions, file=paste0(genome, "_Gencode", version, "_annotations.pc.transcript.regions.rds"))
+saveRDS(txs.longest.pc.regions, file=paste0(genome, "_Gencode", version, "_annotations.pc.transcript.regions.rds"))
 ```
 
 ##### Table 2: Summary of the non-overlapping protein-coding regions
@@ -432,7 +431,7 @@ mcols(tx.regions)$region = factor(mcols(tx.regions)$region, levels=c("ncRNA", "C
 # # sanity check
 # length(tx.regions) == length(reduce(tx.regions, min.gapwidth = 0L))
 
-save(tx.regions, file=paste0(genome, "_Gencode", version, "_annotations.all.genes.transcript.regions.rds"))
+saveRDS(tx.regions, file=paste0(genome, "_Gencode", version, "_annotations.all.genes.transcript.regions.rds"))
 ```
 
 ##### Table 3: Summary of all non-overlapping genomic regions
