@@ -34,7 +34,6 @@ cat(sessionInfo()$R.version$version.string, fill=TRUE)
 cat(paste("Platform", sessionInfo()$platform), fill=TRUE)
 cat(paste("Running under", sessionInfo()$running), fill=TRUE)
 cat(paste("Last knitted on", date()), fill=TRUE)
-cat(paste("Working directory set to", getwd()), fill=TRUE)
 cat(paste("Species: ", species), fill=TRUE)
 cat(paste("Genome assembly:", genome), fill=TRUE)
 cat(paste("Gencode version:", version), fill=TRUE)
@@ -103,7 +102,7 @@ if( species %in% "Homo sapiens" ){
 __Note__: the pipeline will search for the genome assembly and Gencode annotation versions specified within the script. Therefore, if you plan to use a different species/assembly/annotation make sure you change the script accordingly. 
 
 ```{r readAnnotation, message=FALSE, warning=FALSE}
-chromosomes = genomeStyles()[[species]]$UCSC
+chromosomes = genomeStyles()[[gsub(" ", "_", species)]]$UCSC
 chrominfo = sortSeqlevels(with(fread(paste0(genome, ".chrom.sizes"))[V1%in%chromosomes,],
                                Seqinfo(V1, seqlengths = V2, genome = genome)))
 
@@ -180,6 +179,11 @@ names(txsBT) = bio.names
 
 txs.metadata = data.table(as.data.frame(gff))[type%in%"transcript",
                                               list(transcript_id, transcript_type, gene_id, gene_type, gene_name, level, seqnames, start, end, width, strand)]
+
+save(genes, txs,
+     geneBT, txsBT,
+     gene.metadata, txs.metadata,
+     file=paste0(genome, "_Gencode", version, "_annotations_minimal.RData"))
 ```
 
 The _Comprehensive gene annotation_ file is employed to extract information on genes, transcripts and exons, while the _Long non-coding RNA gene annotation_ is used to include additional non-coding RNAs (assigned as such by Gencode) to those predicted using sequences from [Rfam](http://rfam.xfam.org/) and [miRBase](http://www.mirbase.org/).
@@ -362,14 +366,118 @@ kable(data.frame(tab), col.names=colnames(tab), format='markdown', digits=1,
       caption="Table 2: Summary of the non-overlapping protein-coding regions")
 ```
 
-```{r genomicRegions}
-# get transcript regions (all genes)
+```{r genomicRegionsGene, echo=FALSE}
+# get genic regions (by gene)
+# hierarchy: ncRNA > long_ncRNA > cds > utr3 > utr5 > intron > other > intergenic
+
+# identify protein-coding genes, long_ncRNAs, ncRNAs and other
+protein.coding = c("protein_coding", paste(rep(c("IG","TR"),each=4), c("C","D","J","V"), "gene", sep="_"), "IG_LV_gene")
+long.ncRNA = unique(names(sort(-table(lnc.gff$gene_type))))
+ncRNA = c(setdiff(grep("RNA", names(geneBT), value=TRUE), long.ncRNA), "ribozyme")
+other = setdiff(names(geneBT), c(ncRNA, long.ncRNA, protein.coding))
+
+protein.coding = as.vector(unlist(geneBT[protein.coding]))
+long.ncRNA = as.vector(unlist(geneBT[long.ncRNA]))
+ncRNA = as.vector(unlist(geneBT[ncRNA]))
+other = as.vector(unlist(geneBT[other]))
+
+gff.dt = data.table(as.data.frame(sort.GenomicRanges(gff)))
+gff.dt = gff.dt[, list(seqnames, start, end, strand, type, gene_id, gene_type, gene_name)]
+
+gff.dt[, splitFactor := factor(as.character(NA), levels=c("ncRNA", "long_ncRNA", "protein_coding", "other"))]
+gff.dt[gene_id%in%protein.coding, splitFactor := "protein_coding"]
+gff.dt[gene_id%in%long.ncRNA, splitFactor := "long_ncRNA"]
+gff.dt[gene_id%in%ncRNA, splitFactor := "ncRNA"]
+gff.dt[gene_id%in%other, splitFactor := "other"]
+
+gff.dt = gff.dt[order(splitFactor)]
+
+sel = c("gene", "CDS", "three_prime_UTR", "five_prime_UTR", "exon")
+gff.dt = gff.dt[type%in%sel,][, `:=`(type = factor(type, levels=sel),
+                                    gene_id = factor(gene_id, levels=unique(gene_id)))]
+
+gff.dt = gff.dt[order(gene_id, type)]
+gff.dt[, index := 1:nrow(gff.dt)]
+
+data.table_to_GRanges <- function(x){
+   gr = with(x, GRanges(seqnames, IRanges(start, end), strand, type, gene_id, gene_type, gene_name))
+   return(gr)
+}
+
+genes = data.table_to_GRanges(gff.dt[type%in%"gene"])
+
+exons = data.table_to_GRanges(gff.dt[type%in%"exon"])
+subregions = data.table_to_GRanges(gff.dt[type%in%c("CDS", "three_prime_UTR", "five_prime_UTR")])
+exons = c(subregions, exons[overlapsAny(exons, setdiff(exons, subregions)),])
+temp = disjoin(exons)
+overlaps = data.table(as.data.frame(findOverlaps(temp, exons)), key="subjectHits")
+temp = temp[overlaps[!duplicated(queryHits), queryHits]]
+mcols(temp) = mcols(exons)[overlaps[!duplicated(queryHits), subjectHits],]
+exons = temp
+
+exons$name = paste(exons$gene_id, exons$type, sep="_")
+exons.ref = unique(data.table(as.data.frame(copy(mcols(exons)))))
+
+exons = reduce(split(exons, exons$name))
+exons = unlist(exons, use.names=TRUE)
+
+exons$name = names(exons)
+exons = data.table(as.data.frame(exons, row.names=NULL), key="name")
+
+setkey(exons.ref, name)
+exons = data.table_to_GRanges(exons[exons.ref,])
+
+introns = setdiff(genes, exons)
+overlaps = data.table(as.data.frame(findOverlaps(introns, genes)), key="subjectHits")
+introns = introns[overlaps[!duplicated(queryHits), queryHits]]
+mcols(introns) = mcols(genes)[overlaps[!duplicated(queryHits), subjectHits],]
+introns$type = "intron"
+
+# Sanity check
+length(c(exons, introns)) == length(reduce(c(exons, introns), min.gapwidth=0))
+length(setdiff(genes, reduce(c(exons, introns), min.gapwidth=0))) == 0
+
+tx.regions = data.table(as.data.frame(c(exons, introns)), key="gene_id")
+
+gff.ref = gff.dt[type%in%"gene", list(gene_id, annotation=splitFactor, index)][order(index), index := seq_along(index)]
+setkey(gff.ref, gene_id)
+
+tx.regions = tx.regions[gff.ref, nomatch=0][order(index, annotation, gene_id, start, seqnames, end)]
+tx.regions = with(tx.regions, GRanges(seqnames, IRanges(start, end), strand, gene_id, gene_type, gene_name, annotation, type))
+
+# Sanity check
+length(tx.regions) == length(reduce(tx.regions, min.gapwidth=0))
+length(setdiff(genes, tx.regions)) == 0
+
+mcols(tx.regions)$annotation = factor(mcols(tx.regions)$annotation, levels=c("protein_coding", "long_ncRNA", "ncRNA", "other"))
+mcols(tx.regions)$type = factor(mcols(tx.regions)$type, levels=c("CDS", "three_prime_UTR", "five_prime_UTR", "exon", "intron"))
+
+
+saveRDS(tx.regions, file=paste0(genome, "_Gencode", version, "_annotations.all.genes.regions.rds"))
+```
+
+##### Table 3: Summary of all non-overlapping genomic regions (by gene)
+
+```{r}
+tab = data.table(as.data.frame(unlist(tx.regions), row.names=NULL))
+
+setnames(tab, "annotation", "Group")
+setnames(tab, "type", "Region")
+
+tab = tab[, c(as.list(summary(width)), Coverage=sum(width)), by=c("Group", "Region")]
+
+kable(data.frame(tab), col.names=colnames(tab), format='markdown', digits=1,
+      caption="Table 4: Summary of all non-overlapping genomic regions (by gene)")
+```
+
+```{r genomicRegionsTxs, echo=FALSE}
+# get genic regions (by transcript)
 # hierarchy: ncRNA > cds > utr3 > utr5 > intron > other > intergenic
 
 # identify protein-coding genes, ncRNAs and other
 protein.coding = which(names(txsBT) %in% c("protein_coding",
-                                           paste(rep(c("IG","TR"),each=4), c("C","D","J","V"), "gene", sep="_")))
-ncRNA =  unique(c(grep("RNA", names(geneBT), value=TRUE),
+                                           paste(rep(c("IG","TR"),each=4), c("C","D","J","V"), "gene", sep="_"), "IG_LV_gene"))
+ncRNA =  unique(c(grep("RNA", names(txsBT), value=TRUE),
                   unique(lnc.gff[lnc.gff$type%in%"gene"]$gene_type)))
 other = setdiff( 1:length(txsBT), c(ncRNA, protein.coding) )
 protein.coding = as.vector(unlist(txsBT[protein.coding]))
@@ -428,13 +536,13 @@ mcols(other.tx)$region = "other"
 tx.regions = c(ncRNA.tx, cds, utr3, utr5, introns, other.tx)
 mcols(tx.regions)$region = factor(mcols(tx.regions)$region, levels=c("ncRNA", "CDS", "UTR3", "UTR5", "intron", "other"))
 
-# # sanity check
-# length(tx.regions) == length(reduce(tx.regions, min.gapwidth = 0L))
+# sanity check
+length(tx.regions) == length(reduce(tx.regions, min.gapwidth = 0L))
 
 saveRDS(tx.regions, file=paste0(genome, "_Gencode", version, "_annotations.all.genes.transcript.regions.rds"))
 ```
 
-##### Table 3: Summary of all non-overlapping genomic regions
+##### Table 4: Summary of all non-overlapping genomic regions (by transcript)
 
 ```{r}
 tab = data.table(as.data.frame(unlist(tx.regions), row.names=NULL))
@@ -444,5 +552,5 @@ setnames(tab, "region", "Region")
 tab = tab[, c(as.list(summary(width)), Coverage=sum(width)), by="Region"]
 
 kable(data.frame(tab), col.names=colnames(tab), format='markdown', digits=1,
-      caption="Table 3: Summary of all non-overlapping genomic regions")
+      caption="Table 4: Summary of all non-overlapping genomic regions (by transcript)")
 ```

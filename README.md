@@ -15,9 +15,7 @@ Federico Agostini
 
     ## Running under OS X El Capitan 10.11.6
 
-    ## Last knitted on Wed Jan 17 18:38:44 2018
-
-    ## Working directory set to /Users/agostif/Desktop/GencodeReference
+    ## Last knitted on Mon Feb 26 14:26:36 2018
 
     ## Species:  Homo sapiens
 
@@ -119,7 +117,35 @@ annotation) genes.
 | CDS    |    8 |     738 |   1233 | 1670.9 |    2013 | 107976 | 33463040 |
 | UTR3   |    1 |     389 |   1031 | 1725.1 |    2338 |  32870 | 32878861 |
 
-##### Table 3: Summary of all non-overlapping genomic regions
+    ## [1] TRUE
+
+    ## [1] TRUE
+
+    ## [1] TRUE
+
+    ## [1] TRUE
+
+##### Table 3: Summary of all non-overlapping genomic regions (by gene)
+
+| Group           | Region            | Min. | 1st Qu. | Median |   Mean | 3rd Qu. |   Max. |   Coverage |
+| :-------------- | :---------------- | ---: | ------: | -----: | -----: | ------: | -----: | ---------: |
+| ncRNA           | exon              |    1 |      87 |    107 |  132.7 |   135.0 |   1559 |     983921 |
+| long\_ncRNA     | exon              |    1 |     105 |    186 |  439.5 |   399.0 | 205012 |   21876296 |
+| long\_ncRNA     | intron            |    1 |     679 |   2248 | 9357.2 |  8129.0 | 409122 |  351280063 |
+| protein\_coding | five\_prime\_UTR  |    1 |      68 |    128 |  197.4 |   241.0 |   6724 |    9038707 |
+| protein\_coding | intron            |    1 |     475 |   1488 | 5374.3 |  4186.0 | 767751 | 1183220603 |
+| protein\_coding | CDS               |    1 |      82 |    121 |  168.9 |   171.0 |  21693 |   35402109 |
+| protein\_coding | three\_prime\_UTR |    1 |     114 |    375 | 1028.4 |  1258.0 |  32870 |   37594131 |
+| protein\_coding | exon              |    1 |      86 |    178 |  330.6 |   357.0 |   9411 |   17154213 |
+| other           | exon              |    1 |     121 |    229 |  422.1 |   521.0 |  12496 |   12362613 |
+| other           | intron            |    1 |     321 |    894 | 2867.8 |  2477.0 | 311063 |   40788428 |
+| other           | CDS               |    5 |     112 |    160 |  323.4 |   304.8 |   1074 |      70504 |
+| other           | five\_prime\_UTR  |    2 |      30 |     84 |  135.7 |   144.0 |   1853 |       8819 |
+| other           | three\_prime\_UTR |   24 |      75 |    385 |  875.9 |  1394.0 |   3688 |      39417 |
+
+    ## [1] TRUE
+
+##### Table 4: Summary of all non-overlapping genomic regions (by transcript)
 
 | Region | Min. | 1st Qu. | Median |   Mean | 3rd Qu. |   Max. |   Coverage |
 | :----- | ---: | ------: | -----: | -----: | ------: | -----: | ---------: |
