@@ -11,12 +11,13 @@ output:
 ---
 
 ```{r setupEnv, include=FALSE}
-working.folder = "/Users/agostif/Desktop/GencodeReference"
+working.folder = "./"
 
 knitr::opts_knit$set(root.dir = working.folder)
 knitr::opts_chunk$set(echo = FALSE)
 
-setwd(working.folder)
+if( interactive() )
+    setwd(working.folder)
 
 species = "Homo sapiens" # or 'Mus musculus' for mouse
 genome = "hg38" # or mm10 for mouse
@@ -50,6 +51,8 @@ require("data.table")
 require("knitr")
 require("ggplot2")
 require("ggpubr")
+require("ggthemes")
+require("scales")
 ```
 
 ## Gencode Annotation (GFF3) 
@@ -64,55 +67,59 @@ If they are not present in the working folder, the pipeline will download the fo
  - __Chromosome sizes__: The file contains the size in nucleorides of each chromosome.
 
 ```{r downloadGencode, results="hide", message=FALSE, warning=FALSE}
-if( species %in% "Homo sapiens" ){
-   if( !file.exists(paste0("gencode.v", version, ".annotation.gff3.gz")) )
-      download.file(paste0("ftp://ftp.sanger.ac.uk/pub/gencode/Gencode_human/release_", version, "/gencode.v", version, ".annotation.gff3.gz"),
-                    paste0("gencode.v", version, ".annotation.gff3.gz"), quiet = TRUE)
-   
-   if( !file.exists(paste0("gencode.v", version, ".long_noncoding_RNAs.gff3.gz")) )
-      download.file(paste0("ftp://ftp.sanger.ac.uk/pub/gencode/Gencode_human/release_", version, "/gencode.v", version, ".long_noncoding_RNAs.gff3.gz"),
-                    paste0("gencode.v", version, ".long_noncoding_RNAs.gff3.gz"), quiet = TRUE)
-   
-   if( !file.exists(paste0("gencode.v", version, ".tRNAs.gff3.gz")) )
-      download.file(paste0("ftp://ftp.sanger.ac.uk/pub/gencode/Gencode_human/release_", version, "/gencode.v", version, ".tRNAs.gff3.gz"),
-                    paste0("gencode.v", version, ".tRNAs.gff3.gz"), quiet = TRUE)
-   
-   if( !file.exists(paste0(genome, ".chrom.sizes")) )
-      download.file(paste0("http://hgdownload.soe.ucsc.edu/goldenPath/", genome, "/bigZips/", genome, ".chrom.sizes"),
-                    paste0(genome, ".chrom.sizes"), quiet = TRUE)
+species = gsub(" ", "_", species)
+if( !dir.exists(file.path(working.folder, species, genome)) )
+    dir.create(file.path(working.folder, species, genome), recursive = TRUE)
+
+if( species %in% "Homo_sapiens" ){
+    if( !file.exists(file.path(working.folder, species, genome, paste0("gencode.v", version, ".annotation.gff3.gz"))) )
+        download.file(paste0("ftp://ftp.sanger.ac.uk/pub/gencode/Gencode_human/release_", version, "/gencode.v", version, ".annotation.gff3.gz"),
+                      file.path(working.folder, species, genome, paste0("gencode.v", version, ".annotation.gff3.gz")), quiet = TRUE)
+    
+    if( !file.exists(file.path(working.folder, species, genome, paste0("gencode.v", version, ".long_noncoding_RNAs.gff3.gz"))) )
+        download.file(paste0("ftp://ftp.sanger.ac.uk/pub/gencode/Gencode_human/release_", version, "/gencode.v", version, ".long_noncoding_RNAs.gff3.gz"),
+                      file.path(working.folder, species, genome, paste0("gencode.v", version, ".long_noncoding_RNAs.gff3.gz")), quiet = TRUE)
+    
+    if( !file.exists(file.path(working.folder, species, genome, paste0("gencode.v", version, ".tRNAs.gff3.gz"))) )
+        download.file(paste0("ftp://ftp.sanger.ac.uk/pub/gencode/Gencode_human/release_", version, "/gencode.v", version, ".tRNAs.gff3.gz"),
+                      file.path(working.folder, species, genome, paste0("gencode.v", version, ".tRNAs.gff3.gz")), quiet = TRUE)
+    
+    if( !file.exists(file.path(working.folder, species, genome, paste0(genome, ".chrom.sizes"))) )
+        download.file(paste0("http://hgdownload.soe.ucsc.edu/goldenPath/", genome, "/bigZips/", genome, ".chrom.sizes"),
+                      file.path(working.folder, species, genome, paste0(genome, ".chrom.sizes")), quiet = TRUE)
 }else{
-   if( !file.exists(paste0("gencode.v", version, ".annotation.gff3.gz")) )
-      download.file(paste0("ftp://ftp.sanger.ac.uk/pub/gencode/Gencode_mouse/release_", version, "/gencode.v", version, ".annotation.gff3.gz"),
-                    paste0("gencode.v", version, ".annotation.gff3.gz"), quiet = TRUE)
-   
-   if( !file.exists(paste0("gencode.v", version, ".long_noncoding_RNAs.gff3.gz")) )
-      download.file(paste0("ftp://ftp.sanger.ac.uk/pub/gencode/Gencode_mouse/release_", version, "/gencode.v", version, ".long_noncoding_RNAs.gff3.gz"),
-                    paste0("gencode.v", version, ".long_noncoding_RNAs.gff3.gz"), quiet = TRUE)
-   
-   if( !file.exists(paste0("gencode.v", version, ".tRNAs.gff3.gz")) )
-      download.file(paste0("ftp://ftp.sanger.ac.uk/pub/gencode/Gencode_mouse/release_", version, "/gencode.v", version, ".tRNAs.gff3.gz"),
-                    paste0("gencode.v", version, ".tRNAs.gff3.gz"), quiet = TRUE)
-   
-   if( !file.exists(paste0(genome, ".chrom.sizes")) )
-      download.file(paste0("http://hgdownload.soe.ucsc.edu/goldenPath/", genome, "/bigZips/", genome, ".chrom.sizes"),
-                    paste0(genome, ".chrom.sizes"), quiet = TRUE)
+    if( !file.exists(file.path(working.folder, species, genome, paste0("gencode.v", version, ".annotation.gff3.gz"))) )
+        download.file(paste0("ftp://ftp.sanger.ac.uk/pub/gencode/Gencode_mouse/release_", version, "/gencode.v", version, ".annotation.gff3.gz"),
+                      file.path(working.folder, species, genome, paste0("gencode.v", version, ".annotation.gff3.gz")), quiet = TRUE)
+    
+    if( !file.exists(file.path(working.folder, species, genome, paste0("gencode.v", version, ".long_noncoding_RNAs.gff3.gz"))) )
+        download.file(paste0("ftp://ftp.sanger.ac.uk/pub/gencode/Gencode_mouse/release_", version, "/gencode.v", version, ".long_noncoding_RNAs.gff3.gz"),
+                      file.path(working.folder, species, genome, paste0("gencode.v", version, ".long_noncoding_RNAs.gff3.gz")), quiet = TRUE)
+    
+    if( !file.exists(file.path(working.folder, species, genome, paste0("gencode.v", version, ".tRNAs.gff3.gz"))) )
+        download.file(paste0("ftp://ftp.sanger.ac.uk/pub/gencode/Gencode_mouse/release_", version, "/gencode.v", version, ".tRNAs.gff3.gz"),
+                      file.path(working.folder, species, genome, paste0("gencode.v", version, ".tRNAs.gff3.gz")), quiet = TRUE)
+    
+    if( !file.exists(file.path(working.folder, species, genome, paste0(genome, ".chrom.sizes"))) )
+        download.file(paste0("http://hgdownload.soe.ucsc.edu/goldenPath/", genome, "/bigZips/", genome, ".chrom.sizes"),
+                      file.path(working.folder, species, genome, paste0(genome, ".chrom.sizes")), quiet = TRUE)
 }
 ```
 
 __Note__: the pipeline will search for the genome assembly and Gencode annotation versions specified within the script. Therefore, if you plan to use a different species/assembly/annotation make sure you change the script accordingly. 
 
 ```{r readAnnotation, message=FALSE, warning=FALSE}
-chromosomes = genomeStyles()[[gsub(" ", "_", species)]]$UCSC
-chrominfo = sortSeqlevels(with(fread(paste0(genome, ".chrom.sizes"))[V1%in%chromosomes,],
+chromosomes = genomeStyles(species)$UCSC
+chrominfo = sortSeqlevels(with(fread(file.path(working.folder, species, genome, paste0(genome, ".chrom.sizes")))[V1%in%chromosomes,],
                                Seqinfo(V1, seqlengths = V2, genome = genome)))
 
-TxDb = makeTxDbFromGFF(file = paste0("gencode.v", version, ".annotation.gff3.gz"),
+TxDb = makeTxDbFromGFF(file = file.path(working.folder, species, genome, paste0("gencode.v", version, ".annotation.gff3.gz")),
                        format = "gff3",
                        dataSource = paste("Gencode version", version),
-                       organism = species,
+                       organism = gsub("_", " ", species),
                        chrominfo = chrominfo)
 
-gff = import.gff3(paste0("gencode.v", version, ".annotation.gff3.gz"))
+gff = import.gff3(file.path(working.folder, species, genome, paste0("gencode.v", version, ".annotation.gff3.gz")))
 seqinfo(gff) = chrominfo
 
 # Remove the duplicated genes on the chromosome Y
@@ -125,7 +132,7 @@ gff = gff[!(seqnames(gff)%in%"chrY" & gff$gene_id%in%y.genes)]
 # ribo.gff = gff[gff$gene_type%in%"rRNA",]
 # gff = gff[!gff$gene_type%in%"rRNA",]
 
-lnc.gff = import.gff3(paste0("gencode.v", version, ".long_noncoding_RNAs.gff3.gz"))
+lnc.gff = import.gff3(file.path(working.folder, species, genome, paste0("gencode.v", version, ".long_noncoding_RNAs.gff3.gz")))
 seqinfo(lnc.gff) = chrominfo
 
 # Remove the duplicated genes on the chromosome Y
@@ -148,8 +155,8 @@ tab = dcast.data.table(tab, gene_type~level, value.var="N", fill=0)[order(-(`1`+
 
 setnames(tab, "gene_type", "Biotype")
 
-kable(head(data.frame(tab), 20), col.names=colnames(tab), format='markdown', digits=1,
-      caption="Table 1: Gene biotypes (top 20) per annotation level.")
+kable(head(data.frame(tab), 10), col.names=colnames(tab), format='markdown', digits=1,
+      caption="Table 1: Gene biotypes (top 10) per annotation level.")
 ```
 
 ```{r extractMetadata}
@@ -180,10 +187,11 @@ names(txsBT) = bio.names
 txs.metadata = data.table(as.data.frame(gff))[type%in%"transcript",
                                               list(transcript_id, transcript_type, gene_id, gene_type, gene_name, level, seqnames, start, end, width, strand)]
 
-save(genes, txs,
-     geneBT, txsBT,
-     gene.metadata, txs.metadata,
-     file=paste0(genome, "_Gencode", version, "_annotations_minimal.RData"))
+if( !dir.exists(file.path(working.folder, species, genome, "RData")) )
+    dir.create(file.path(working.folder, species, genome, "RData"), recursive = TRUE)
+
+save(genes, geneBT, gene.metadata, file=file.path(working.folder, species, genome, "RData", paste0(genome, "_Gencode", version, "_genes_annotations_minimal.RData")))
+save(txs, txsBT, txs.metadata, file=file.path(working.folder, species, genome,  "RData", paste0(genome, "_Gencode", version, "_txs_annotations_minimal.RData")))
 ```
 
 The _Comprehensive gene annotation_ file is employed to extract information on genes, transcripts and exons, while the _Long non-coding RNA gene annotation_ is used to include additional non-coding RNAs (assigned as such by Gencode) to those predicted using sequences from [Rfam](http://rfam.xfam.org/) and [miRBase](http://www.mirbase.org/).
@@ -197,7 +205,7 @@ protein.coding = names(geneBT)%in%c("protein_coding",
 protein.coding = as.vector(unlist(geneBT[protein.coding]))
 genes.pc.granges = genes[names(genes) %in% protein.coding,]
 
-ncRNA = unique(c(grep("RNA", names(geneBT), value=TRUE),
+ncRNA = unique(c(grep("RNA", names(geneBT), value=TRUE), "ribozyme",
                  unique(lnc.gff[lnc.gff$type%in%"gene"]$gene_type)))
 ncRNA = as.vector(unlist(geneBT[ncRNA]))
 genes.nc.granges = genes[names(genes) %in% ncRNA,]
@@ -209,7 +217,7 @@ protein.coding = names(txsBT) %in% c("protein_coding",
 protein.coding = as.vector(unlist(txsBT[protein.coding]))
 txs.length.pc = txs.length[txs.length$tx_name %in% protein.coding,]
 
-ncRNA = unique(c(grep("RNA", names(txsBT), value=TRUE),
+ncRNA = unique(c(grep("RNA", names(txsBT), value=TRUE), "ribozyme",
                  unique(lnc.gff[lnc.gff$type%in%"gene"]$gene_type)))
 ncRNA = as.vector(unlist(txsBT[ncRNA]))
 txs.length.nc = txs.length[txs.length$tx_name %in% ncRNA,]
@@ -267,24 +275,27 @@ temp$gene_id = gff[match(names(temp), gff$transcript_id),]$gene_id
 names(temp) = NULL
 exons.nc.granges = reduce(split(temp, temp$gene_id))
 
-save(genes, txs,
-     gene.metadata, txs.metadata,
-     exonsByGene, exonsByTxs,
-     genes.pc.granges, genes.nc.granges, 
-     exons.pc.granges, exons.nc.granges,
-     txs.longest.pc.pre.granges, txs.longest.nc.pre.granges, 
-     txs.longest.pc.rna.granges, txs.longest.nc.rna.granges, 
-     file=paste0(genome, "_Gencode", version, "_annotations.RData"))
+save(genes, geneBT, gene.metadata, genes.pc.granges, genes.nc.granges, exonsByGene, exons.pc.granges, exons.nc.granges,
+     file=file.path(working.folder, species, genome, "RData", paste0(genome, "_Gencode", version, "_genes_annotations.RData")))
+save(txs, txsBT, txs.metadata, exonsByTxs, txs.longest.pc.pre.granges, txs.longest.nc.pre.granges, txs.longest.pc.rna.granges, txs.longest.nc.rna.granges,
+     file=file.path(working.folder, species, genome,  "RData", paste0(genome, "_Gencode", version, "_txs_annotations.RData")))
 ```
 
 ### Output
 
-- __&lt;genome&gt;\_Gencode&lt;version&gt;\_annotations.RData__: It contains most of the annotation objects, including genes, transcripts and exons GRanges, genes and transcripts metadata, and longest pre- and mature RNA GRanges.
+- __&lt;genome&gt;\_Gencode&lt;version&gt;\_genes_annotations_minimal.RData__: It contains the basic annotation objects, including genes GRanges, biotypes and metadata information.
+- __&lt;genome&gt;\_Gencode&lt;version&gt;\_txs_annotations.RData__: It contains the basic annotation objects, including transcripts GRanges, biotypes and metadata information.
+- __&lt;genome&gt;\_Gencode&lt;version&gt;\_genes_annotations.RData__: In addition to the minimal object, it contains exons GRanges and separate protein-coding and non-coding genes and exons GRanges.
+- __&lt;genome&gt;\_Gencode&lt;version&gt;\_txs_annotations.RData__: In addition to the minimal object, it contains exons GRanges and separate protein-coding and non-coding longest transcripts and exons GRanges. These are further divided into 'pre' (nascent)  and 'rna' (mature) transcripts.
+
 - __&lt;genome&gt;\_Gencode&lt;version&gt;\_annotations.pc.transcript.regions.rds__: It contains protein-coding genes GRanges sub-divided into 5’-UTR, exonic and 3’-UTR regions.
 - __&lt;genome&gt;\_Gencode&lt;version&gt;\_annotations.all.genes.transcript.regions.rds__: It contains all the annotated features, where each annotated nucleotide is assigned to a transcript biotype using the following hierarchy:
   ncRNA &gt; cds &gt; utr3 &gt; utr5 &gt; intron &gt; other > intergenic
 
 ```{r}
+if( !dir.exists(file.path(working.folder, "img")) )
+    dir.create(file.path(working.folder, "img"))
+
 tab = gene.metadata
 
 bio_order = tab[, list(median=median(width)), by="gene_type"][order(-median), gene_type]
@@ -292,6 +303,7 @@ bio_order = tab[, list(median=median(width)), by="gene_type"][order(-median), ge
 tab[, gene_type := factor(gene_type, bio_order)]
 
 gg = ggplot(tab, aes(x=gene_type, y=width)) +
+    ggtitle(paste("Genes width -", species, genome, version)) +
     geom_boxplot() +
     scale_y_log10("Gene width") +
     scale_x_discrete("") +
@@ -305,6 +317,7 @@ bio_order = tab[, list(median=median(width)), by="gene_type"][order(-median), ge
 tab[, gene_type := factor(gene_type, bio_order)]
 
 gg = ggplot(tab, aes(x=gene_type, y=width)) +
+    ggtitle(paste("Transcripts width -", species, genome, version)) +
     geom_boxplot() +
     scale_y_log10("Transcript width") +
     scale_x_discrete("") +
@@ -434,8 +447,8 @@ mcols(introns) = mcols(genes)[overlaps[!duplicated(queryHits), subjectHits],]
 introns$type = "intron"
 
 # Sanity check
-length(c(exons, introns)) == length(reduce(c(exons, introns), min.gapwidth=0))
-length(setdiff(genes, reduce(c(exons, introns), min.gapwidth=0))) == 0
+stopifnot(length(c(exons, introns)) == length(reduce(c(exons, introns), min.gapwidth=0)))
+stopifnot(length(setdiff(genes, reduce(c(exons, introns), min.gapwidth=0))) == 0)
 
 tx.regions = data.table(as.data.frame(c(exons, introns)), key="gene_id")
 
@@ -446,21 +459,57 @@ tx.regions = tx.regions[gff.ref, nomatch=0][order(index, annotation, gene_id, st
 tx.regions = with(tx.regions, GRanges(seqnames, IRanges(start, end), strand, gene_id, gene_type, gene_name, annotation, type))
 
 # Sanity check
-length(tx.regions) == length(reduce(tx.regions, min.gapwidth=0))
-length(setdiff(genes, tx.regions)) == 0
+stopifnot(length(tx.regions) == length(reduce(tx.regions, min.gapwidth=0)))
+stopifnot(length(setdiff(genes, tx.regions)) == 0)
 
 mcols(tx.regions)$annotation = factor(mcols(tx.regions)$annotation, levels=c("protein_coding", "long_ncRNA", "ncRNA", "other"))
 mcols(tx.regions)$type = factor(mcols(tx.regions)$type, levels=c("CDS", "three_prime_UTR", "five_prime_UTR", "exon", "intron"))
 
-
 saveRDS(tx.regions, file=paste0(genome, "_Gencode", version, "_annotations.all.genes.regions.rds"))
 ```
+
+```{r chromosomalGeneDensity}
+chr.dt = data.table(as.data.frame(chrominfo), keep.rownames="chr", key="chr")
+chr.dt[order(chr.dt[, -seqlengths]), chrOrder := seq_along(chr)]
+density.dt = gff.dt[type%in%"gene"]
+setkey(density.dt, seqnames)
+density.dt[chr.dt, `:=`(chrLength = seqlengths, chrOrder = chrOrder)]
+density.dt[, geneLength := end-start]
+density.dt = density.dt[, list(Count = .N, Coverage = sum(geneLength), chrLength = unique(chrLength), chrOrder = unique(chrOrder)), by=c("splitFactor", "seqnames")]
+tab = unique(density.dt[, list(chrOrder, seqnames)])
+tab = tab[order(chrOrder),]
+density.dt[, bioGroup := factor(splitFactor, levels=c("protein_coding", "long_ncRNA", "ncRNA", "other"))]
+
+gg1 = ggplot(density.dt, aes(x=chrOrder, y=Coverage, fill=bioGroup)) +
+    geom_bar(data=chr.dt, aes(x=chrOrder, y=seqlengths), position="identity", stat="identity", fill="grey", colour="black", alpha=0.5) +
+    geom_bar(position="stack", stat="identity", col="black") +
+    scale_x_continuous("Chromosomes (ordered by size)", breaks=tab$chrOrder, labels=tab$seqnames) +
+    scale_fill_tableau("", palette="tableau10medium") +
+    theme_bw() + theme(legend.position=c(0.9, 0.8))
+gg2 = ggplot(density.dt, aes(x=chrOrder, y=Coverage/chrLength, fill=bioGroup)) +
+    geom_bar(position="dodge", stat="identity", col="black") +
+    scale_x_continuous("Chromosomes (ordered by size)", breaks=tab$chrOrder, labels=tab$seqnames) +
+    scale_y_continuous("Percentage of chromosome covered", labels=percent) +
+    scale_fill_tableau(palette="tableau10medium") +
+    theme_bw() + guides(fill=FALSE)
+png("img/chr_density.png", units="in", height=8, width=12, res=300)
+    ggarrange(gg1, gg2, nrow=2)
+dev.off()
+```
+
+##### Figure 3: Gene density across chromosomes
+
+![](img/chr_density.png)
 
 ##### Table 3: Summary of all non-overlapping genomic regions (by gene)
 
 ```{r}
-tab = data.table(as.data.frame(unlist(tx.regions), row.names=NULL))
-
+if( is.list(tx.regions)){
+    tab = data.table(as.data.frame(unlist(tx.regions), row.names=NULL))
+}else{
+    tab = data.table(as.data.frame(tx.regions, row.names=NULL))
+}
+    
 setnames(tab, "annotation", "Group")
 setnames(tab, "type", "Region")
 

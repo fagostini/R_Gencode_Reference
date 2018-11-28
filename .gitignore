@@ -4,3 +4,4 @@
 *.sizes
 *.rds
 GencodeReference.Rproj
+.Rproj.user
