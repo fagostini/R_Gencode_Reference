@@ -1,6 +1,3 @@
-Gencode Annotation Processing
-================
-Federico Agostini
 
 ## To-Do
 
@@ -9,19 +6,19 @@ Federico Agostini
 
 ## Setup
 
-    ## R version 3.4.3 (2017-11-30)
+    ## R version 3.6.1 (2019-07-05)
 
-    ## Platform x86_64-apple-darwin15.6.0 (64-bit)
+    ## Platform x86_64-pc-linux-gnu (64-bit)
 
-    ## Running under OS X El Capitan 10.11.6
+    ## Running under Ubuntu 18.04.3 LTS
 
-    ## Last knitted on Mon Feb 26 14:26:36 2018
+    ## Last knitted on Fri Aug 23 11:43:55 2019
 
     ## Species:  Homo sapiens
 
-    ## Genome assembly: hg38
+    ## Genome assembly: hg19
 
-    ## Gencode version: 27
+    ## Gencode version: 19
 
 If any of the information above does not suit your needs, please review
 it in the ‘setup’ chunk and re-run the script.
@@ -51,28 +48,18 @@ script accordingly.
 
 ##### Table 1: Gene biotypes (top 20) per annotation level
 
-| Biotype                              |    1 |     2 |    3 |
-| :----------------------------------- | ---: | ----: | ---: |
-| protein\_coding                      | 5582 | 14215 |   21 |
-| processed\_pseudogene                | 8033 |  2199 |    1 |
-| lincRNA                              | 1099 |  6393 |    1 |
-| antisense\_RNA                       |  908 |  4609 |    0 |
-| unprocessed\_pseudogene              |  427 |  2210 |    0 |
-| misc\_RNA                            |    0 |     0 | 2212 |
-| snRNA                                |    0 |     1 | 1899 |
-| miRNA                                |    0 |     0 | 1879 |
-| TEC                                  |    1 |  1065 |    0 |
-| snoRNA                               |    0 |     8 |  935 |
-| sense\_intronic                      |   68 |   836 |    0 |
-| transcribed\_unprocessed\_pseudogene |  122 |   706 |    0 |
-| processed\_transcript                |   73 |   470 |    0 |
-| rRNA                                 |    0 |     0 |  543 |
-| transcribed\_processed\_pseudogene   |  322 |   140 |    0 |
-| sense\_overlapping                   |   17 |   172 |    0 |
-| IG\_V\_pseudogene                    |   35 |   153 |    0 |
-| IG\_V\_gene                          |    0 |   144 |    0 |
-| transcribed\_unitary\_pseudogene     |   20 |    91 |    0 |
-| TR\_V\_gene                          |    0 |   108 |    0 |
+| Biotype         |    1 |     2 |    3 |
+| :-------------- | ---: | ----: | ---: |
+| protein\_coding | 5165 | 14614 |  548 |
+| pseudogene      | 8823 |  4791 |  306 |
+| lincRNA         | 1010 |  6097 |    2 |
+| antisense       |  852 |  4421 |    0 |
+| miRNA           |    0 |     6 | 3043 |
+| misc\_RNA       |    0 |     2 | 2031 |
+| snRNA           |    0 |     5 | 1911 |
+| snoRNA          |    0 |     8 | 1449 |
+| sense\_intronic |   64 |   677 |    0 |
+| rRNA            |    0 |     0 |  526 |
 
 The *Comprehensive gene annotation* file is employed to extract
 information on genes, transcripts and exons, while the *Long non-coding
@@ -82,19 +69,35 @@ RNA gene annotation* is used to include additional non-coding RNAs
 
 By default, the analysis is restricted to standard chromosome only, and
 to level 1 (validated), 2 (manual annotation) and 3 (automated
-annotation) genes.
+annotation)
+    genes.
 
 ### Output
 
-  - **\<genome\>\_Gencode\<version\>\_annotations.RData**: It contains
-    most of the annotation objects, including genes, transcripts and
-    exons GRanges, genes and transcripts metadata, and longest pre- and
-    mature RNA
-    GRanges.
+  - **\<genome\>\_Gencode\<version\>\_genes\_annotations\_minimal.RData**:
+    It contains the basic annotation objects, including genes GRanges
+    and metadata information.
+
+  - **\<genome\>\_Gencode\<version\>\_txs\_annotations\_minimal.RData**:
+    It contains the basic annotation objects, including transcripts
+    GRanges and metadata information.
+
+  - **\<genome\>\_Gencode\<version\>\_genes\_annotations.RData**: In
+    addition to the minimal object, it contains exons GRanges and
+    separate protein-coding and non-coding genes and exons GRanges.
+
+  - **\<genome\>\_Gencode\<version\>\_txs\_annotations.RData**: In
+    addition to the minimal object, it contains exons GRanges and
+    separate protein-coding and non-coding longest transcripts and exons
+    GRanges. These are further divided into ‘pre’ (nascent) and ‘rna’
+    (mature)
+    transcripts.
+
   - **\<genome\>\_Gencode\<version\>\_annotations.pc.transcript.regions.rds**:
     It contains protein-coding genes GRanges sub-divided into 5’-UTR,
     exonic and 3’-UTR
     regions.
+
   - **\<genome\>\_Gencode\<version\>\_annotations.all.genes.transcript.regions.rds**:
     It contains all the annotated features, where each annotated
     nucleotide is assigned to a transcript biotype using the following
@@ -113,45 +116,41 @@ annotation) genes.
 
 | Region | Min. | 1st Qu. | Median |   Mean | 3rd Qu. |   Max. | Coverage |
 | :----- | ---: | ------: | -----: | -----: | ------: | -----: | -------: |
-| UTR5   |    1 |      97 |    206 |  296.0 |     374 |   7720 |  5598828 |
-| CDS    |    8 |     738 |   1233 | 1670.9 |    2013 | 107976 | 33463040 |
-| UTR3   |    1 |     389 |   1031 | 1725.1 |    2338 |  32870 | 32878861 |
+| UTR5   |    1 |      95 |    204 |  300.7 |     375 |  14960 |  5746629 |
+| CDS    |    8 |     687 |   1191 | 1619.2 |    1965 | 107976 | 33280413 |
+| UTR3   |    1 |     355 |    933 | 1517.0 |    2061 |  22552 | 29321630 |
 
-    ## [1] TRUE
+##### Figure 3: Gene density across chromosomes
 
-    ## [1] TRUE
-
-    ## [1] TRUE
-
-    ## [1] TRUE
+![](img/chr_density.png)
 
 ##### Table 3: Summary of all non-overlapping genomic regions (by gene)
 
 | Group           | Region            | Min. | 1st Qu. | Median |   Mean | 3rd Qu. |   Max. |   Coverage |
 | :-------------- | :---------------- | ---: | ------: | -----: | -----: | ------: | -----: | ---------: |
-| ncRNA           | exon              |    1 |      87 |    107 |  132.7 |   135.0 |   1559 |     983921 |
-| long\_ncRNA     | exon              |    1 |     105 |    186 |  439.5 |   399.0 | 205012 |   21876296 |
-| long\_ncRNA     | intron            |    1 |     679 |   2248 | 9357.2 |  8129.0 | 409122 |  351280063 |
-| protein\_coding | five\_prime\_UTR  |    1 |      68 |    128 |  197.4 |   241.0 |   6724 |    9038707 |
-| protein\_coding | intron            |    1 |     475 |   1488 | 5374.3 |  4186.0 | 767751 | 1183220603 |
-| protein\_coding | CDS               |    1 |      82 |    121 |  168.9 |   171.0 |  21693 |   35402109 |
-| protein\_coding | three\_prime\_UTR |    1 |     114 |    375 | 1028.4 |  1258.0 |  32870 |   37594131 |
-| protein\_coding | exon              |    1 |      86 |    178 |  330.6 |   357.0 |   9411 |   17154213 |
-| other           | exon              |    1 |     121 |    229 |  422.1 |   521.0 |  12496 |   12362613 |
-| other           | intron            |    1 |     321 |    894 | 2867.8 |  2477.0 | 311063 |   40788428 |
-| other           | CDS               |    5 |     112 |    160 |  323.4 |   304.8 |   1074 |      70504 |
-| other           | five\_prime\_UTR  |    2 |      30 |     84 |  135.7 |   144.0 |   1853 |       8819 |
-| other           | three\_prime\_UTR |   24 |      75 |    385 |  875.9 |  1394.0 |   3688 |      39417 |
-
-    ## [1] TRUE
+| ncRNA           | exon              |    1 |    87.0 |  104.0 |  125.2 |   121.0 |   1559 |    1110549 |
+| long\_ncRNA     | exon              |    1 |   103.0 |  178.0 |  383.0 |   362.0 |  91667 |   17231198 |
+| long\_ncRNA     | intron            |    1 |   647.0 | 2147.0 | 9225.7 |  7837.0 | 409122 |  320169286 |
+| protein\_coding | CDS               |    1 |    82.0 |  121.0 |  168.6 |   171.0 |  21693 |   35239515 |
+| protein\_coding | five\_prime\_UTR  |    1 |    67.0 |  128.0 |  198.8 |   240.0 |  14960 |    9098634 |
+| protein\_coding | three\_prime\_UTR |    1 |   113.0 |  367.0 |  935.6 |  1169.0 |  22552 |   33261185 |
+| protein\_coding | intron            |    1 |   475.2 | 1494.0 | 5387.0 |  4203.0 | 657297 | 1179276593 |
+| protein\_coding | exon              |    1 |    86.0 |  176.0 |  321.4 |   350.0 |  24177 |   16342578 |
+| protein\_coding | UTR               |    4 |    71.2 |  111.5 |  353.7 |   161.8 |  15046 |      72864 |
+| other           | exon              |    1 |   120.0 |  238.0 |  426.0 |   541.0 |  12496 |   11727581 |
+| other           | intron            |    1 |   309.0 |  829.0 | 2666.0 |  2273.0 | 311063 |   34537801 |
+| other           | CDS               |    4 |    96.0 |  136.0 |  191.8 |   181.0 |   1859 |      73467 |
+| other           | three\_prime\_UTR |   10 |   121.5 |  314.0 |  604.8 |   762.0 |   3328 |      18750 |
+| other           | five\_prime\_UTR  |    2 |    35.0 |   89.0 |   98.0 |   123.0 |    352 |       3235 |
 
 ##### Table 4: Summary of all non-overlapping genomic regions (by transcript)
 
-| Region | Min. | 1st Qu. | Median |   Mean | 3rd Qu. |   Max. |   Coverage |
-| :----- | ---: | ------: | -----: | -----: | ------: | -----: | ---------: |
-| ncRNA  |    2 |      91 |    141 |  297.8 |   266.0 | 205012 |   40928476 |
-| CDS    |    1 |      80 |    121 |  174.4 |   172.0 |  21693 |   28517368 |
-| UTR3   |    1 |     181 |    549 | 1201.9 |  1541.2 |  32870 |   33513951 |
-| UTR5   |    1 |      57 |    117 |  183.0 |   227.0 |   5545 |    7701216 |
-| intron |    1 |     448 |   1418 | 5226.2 |  3982.0 | 767751 | 1164023803 |
-| other  |    1 |     487 |   1436 | 7650.7 |  5771.0 | 602638 |  435119605 |
+| Region      | Min. | 1st Qu. | Median |   Mean | 3rd Qu. |   Max. |   Coverage |
+| :---------- | ---: | ------: | -----: | -----: | ------: | -----: | ---------: |
+| ncRNA       |   35 |      87 |    104 |  125.4 |   121.0 |   2728 |    1147867 |
+| CDS         |    1 |      84 |    123 |  170.7 |   172.0 |  21693 |   35101038 |
+| UTR3        |    1 |     188 |    541 | 1116.8 |  1460.5 |  22552 |   31846862 |
+| UTR5        |    1 |      67 |    126 |  196.9 |   238.0 |  14960 |    8998336 |
+| long\_ncRNA |    1 |      91 |    160 |  325.2 |   317.0 |  91667 |   24356623 |
+| intron      |    1 |     449 |   1425 | 5247.9 |  3995.0 | 728468 | 1162213235 |
+| other       |    1 |     472 |   1350 | 7480.1 |  5488.5 | 602638 |  393624369 |
