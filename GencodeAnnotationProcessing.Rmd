@@ -68,41 +68,41 @@ If they are not present in the working folder, the pipeline will download the fo
 
 ```{r downloadGencode, results="hide", message=FALSE, warning=FALSE}
 if( species %in% "Homo sapiens" ){
-    if( !file.exists(paste0("gencode.v", version, ".annotation.gff3.gz")) )
+    if( !file.exists(file.path(working.folder, gsub(" ", "_", species), genome, paste0("gencode.v", version, ".annotation.gff3.gz"))) )
         download.file(paste0("ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_", version, "/gencode.v", version, ".annotation.gff3.gz"),
                       file.path(working.folder, gsub(" ", "_", species), genome, paste0("gencode.v", version, ".annotation.gff3.gz")), quiet = TRUE)
     
-    if( !file.exists(paste0("gencode.v", version, ".long_noncoding_RNAs.gff3.gz")) | !file.exists(paste0("gencode.v", version, ".long_noncoding_RNAs.gtf.gz")) )
+    if( !file.exists(file.path(working.folder, gsub(" ", "_", species), genome, paste0("gencode.v", version, ".long_noncoding_RNAs.gff3.gz"))) | !file.exists(file.path(working.folder, gsub(" ", "_", species), genome, paste0("gencode.v", version, ".long_noncoding_RNAs.gtf.gz"))) )
         try.log = try(download.file(paste0("ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_", version, "/gencode.v", version, ".long_noncoding_RNAs.gff3.gz"),
                                     file.path(working.folder, gsub(" ", "_", species), genome, paste0("gencode.v", version, ".long_noncoding_RNAs.gff3.gz")), quiet = TRUE), silent=TRUE)
     if( is(try.log) == "try-error")
         download.file(paste0("ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_", version, "/gencode.v", version, ".long_noncoding_RNAs.gtf.gz"),
                       file.path(working.folder, gsub(" ", "_", species), genome, paste0("gencode.v", version, ".long_noncoding_RNAs.gtf.gz")), quiet = TRUE)
     
-    if( !file.exists(paste0("gencode.v", version, ".tRNAs.gff3.gz")) | !file.exists(paste0("gencode.v", version, ".tRNAs.gtf.gz")) )
+    if( !file.exists(file.path(working.folder, gsub(" ", "_", species), genome, paste0("gencode.v", version, ".tRNAs.gff3.gz"))) | !file.exists(file.path(working.folder, gsub(" ", "_", species), genome, paste0("gencode.v", version, ".tRNAs.gtf.gz"))) )
         try.log = try(download.file(paste0("ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_", version, "/gencode.v", version, ".tRNAs.gff3.gz"),
                                     file.path(working.folder, gsub(" ", "_", species), genome, paste0("gencode.v", version, ".tRNAs.gff3.gz")), quiet = TRUE), silent=TRUE)
     if( is(try.log) == "try-error")
         download.file(paste0("ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_", version, "/gencode.v", version, ".tRNAs.gtf.gz"),
                       file.path(working.folder, gsub(" ", "_", species), genome, paste0("gencode.v", version, ".tRNAs.gtf.gz")), quiet = TRUE)
     
-    if( !file.exists(paste0(genome, ".chrom.sizes")) )
+    if( !file.exists(file.path(working.folder, gsub(" ", "_", species), genome, paste0(genome, ".chrom.sizes"))) )
         download.file(paste0("http://hgdownload.soe.ucsc.edu/goldenPath/", genome, "/bigZips/", genome, ".chrom.sizes"),
                       file.path(working.folder, gsub(" ", "_", species), genome, paste0(genome, ".chrom.sizes")), quiet = TRUE)
 }else{
-    if( !file.exists(paste0("gencode.v", version, ".annotation.gff3.gz")) )
+    if( !file.exists(file.path(working.folder, gsub(" ", "_", species), genome, paste0("gencode.v", version, ".annotation.gff3.gz"))) )
         download.file(paste0("ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_mouse/release_", version, "/gencode.v", version, ".annotation.gff3.gz"),
                       file.path(working.folder, gsub(" ", "_", species), genome, paste0("gencode.v", version, ".annotation.gff3.gz")), quiet = TRUE)
     
-    if( !file.exists(paste0("gencode.v", version, ".long_noncoding_RNAs.gff3.gz")) )
+    if( !file.exists(file.path(working.folder, gsub(" ", "_", species), genome, paste0("gencode.v", version, ".long_noncoding_RNAs.gff3.gz"))) )
         download.file(paste0("ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_mouse/release_", version, "/gencode.v", version, ".long_noncoding_RNAs.gff3.gz"),
                       file.path(working.folder, gsub(" ", "_", species), genome, paste0("gencode.v", version, ".long_noncoding_RNAs.gff3.gz")), quiet = TRUE)
     
-    if( !file.exists(paste0("gencode.v", version, ".tRNAs.gff3.gz")) )
+    if( !file.exists(file.path(working.folder, gsub(" ", "_", species), genome, paste0("gencode.v", version, ".tRNAs.gff3.gz"))) )
         download.file(paste0("ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_mouse/release_", version, "/gencode.v", version, ".tRNAs.gff3.gz"),
                       file.path(working.folder, gsub(" ", "_", species), genome, paste0("gencode.v", version, ".tRNAs.gff3.gz")), quiet = TRUE)
     
-    if( !file.exists(paste0(genome, ".chrom.sizes")) )
+    if( !file.exists(file.path(working.folder, gsub(" ", "_", species), genome, paste0(genome, ".chrom.sizes"))) )
         download.file(paste0("http://hgdownload.soe.ucsc.edu/goldenPath/", genome, "/bigZips/", genome, ".chrom.sizes"),
                       file.path(working.folder, gsub(" ", "_", species), genome, paste0(genome, ".chrom.sizes")), quiet = TRUE)
 }
@@ -642,4 +642,27 @@ tab = tab[, c(as.list(summary(width)), Coverage=sum(width)), by="Region"]
 
 kable(data.frame(tab), col.names=colnames(tab), format='markdown', digits=1,
       caption="Table 4: Summary of all non-overlapping genomic regions (by transcript)")
+```
+
+```{r metaprofileSets, echo=FALSE}
+genes_all = genes(TxDb)
+
+introns_all = unlist(reduce(intronsByTranscript(TxDb, use.names=TRUE)))
+exons_all = unlist(reduce(exonsBy(TxDb, by="tx", use.names=TRUE)))
+regions_all = c(exons_all, introns_all)
+regions_all$genes = countOverlaps(regions_all, genes_all)
+regions_all$exons = countOverlaps(regions_all, exons_all)
+regions_all$introns = countOverlaps(regions_all, introns_all)
+
+regions_all = regions_all[regions_all$genes==1]
+regions_all$type = as.character(NA)
+regions_all[regions_all$exons>=1 & regions_all$introns==0,]$type = "exon"
+regions_all[regions_all$introns>=1 & regions_all$exons==0,]$type = "intron"
+regions_all[is.na(regions_all$type),]$type = "undefined"
+
+regions_all$gene_id = genes_all[findOverlaps(regions_all, genes_all, select="first"),]$gene_id
+
+exons_all = exonsBy(TxDb, by="tx")
+
+exons_sel = exons_all[sapply(exons_all, length)>=3]
 ```
