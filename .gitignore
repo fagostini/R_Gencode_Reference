@@ -1,7 +1,12 @@
 
+*DS_Store*
 *.gz
 *.RData
 *.sizes
 *.rds
+*.md
 GencodeReference.Rproj
 .Rproj.user
+.Rhistory
+Homo_sapiens/**
+Mus_musculus/**
