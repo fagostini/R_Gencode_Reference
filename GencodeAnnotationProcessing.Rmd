@@ -67,6 +67,9 @@ If they are not present in the working folder, the pipeline will download the fo
 - __Chromosome sizes__: The file contains the size in nucleorides of each chromosome.
 
 ```{r downloadGencode, results="hide", message=FALSE, warning=FALSE}
+if( !dir.exists(file.path(working.folder, gsub(" ", "_", species), genome)) )
+    dir.create(file.path(working.folder, gsub(" ", "_", species), genome), recursive=TRUE)
+
 if( species %in% "Homo sapiens" ){
     if( !file.exists(file.path(working.folder, gsub(" ", "_", species), genome, paste0("gencode.v", version, ".annotation.gff3.gz"))) )
         download.file(paste0("ftp://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_", version, "/gencode.v", version, ".annotation.gff3.gz"),
